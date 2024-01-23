@@ -2414,3 +2414,7 @@ func (t *TextArea) MouseHandler() func(action MouseAction, event *tcell.EventMou
 		return
 	})
 }
+
+func (t *TextArea) SetHasFocus(hasFocus bool) {
+	t.hasFocus = hasFocus
+}
