@@ -2,6 +2,7 @@ package tview
 
 import (
 	"github.com/gdamore/tcell/v2"
+	"slices"
 )
 
 // Flex directions.
@@ -95,6 +96,11 @@ func (f *Flex) SetFullScreen(fullScreen bool) *Flex {
 // space but nothing will be drawn.
 func (f *Flex) AddItem(item Primitive, fixedSize, proportion int, focus bool) *Flex {
 	f.items = append(f.items, &flexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus})
+	return f
+}
+
+func (f *Flex) InsertItem(item Primitive, index, fixedSize, proportion int, focus bool) *Flex {
+	f.items = slices.Insert(f.items, index, &flexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus})
 	return f
 }
 
