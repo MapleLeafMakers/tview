@@ -92,6 +92,12 @@ type Application struct {
 	// be forwarded).
 	inputCapture func(event *tcell.EventKey) *tcell.EventKey
 
+	// An optional callback function which is invoked when the application's
+	// window is initialized, and when the application's window size changes.
+	// After invoking this callback the screen is cleared and the application
+	// is drawn.
+	afterResize func(width int, height int)
+
 	// An optional callback function which is invoked just before the root
 	// primitive is drawn.
 	beforeDraw func(screen tcell.Screen) bool
@@ -452,6 +458,12 @@ EventLoop:
 					break
 				}
 				lastRedraw = time.Now()
+				width, height := screen.Size()
+				// Call afterResize handler if there is one.
+				if a.afterResize != nil {
+					a.afterResize(width, height)
+				}
+
 				screen.Clear()
 				a.draw()
 			case *tcell.EventMouse:
@@ -792,9 +804,32 @@ func (a *Application) ResizeToFullScreen(p Primitive) *Application {
 	return a
 }
 
-// SetFocus sets the focus to a new primitive. All key events will be directed
-// down the hierarchy (starting at the root) until a primitive handles them,
-// which per default goes towards the focused primitive.
+// SetAfterResizeFunc installs a callback function which is invoked when the
+// application's window is initialized, and when the application's window size
+// changes. After invoking this callback the screen is cleared and the
+// application is drawn.
+//
+// Provide nil to uninstall the callback function.
+func (a *Application) SetAfterResizeFunc(handler func(width int, height int)) *Application {
+	a.Lock()
+	defer a.Unlock()
+
+	a.afterResize = handler
+	return a
+}
+
+// GetAfterResizeFunc returns the callback function installed with
+// SetAfterResizeFunc() or nil if none has been installed.
+func (a *Application) GetAfterResizeFunc() func(width int, height int) {
+	a.RLock()
+	defer a.RUnlock()
+
+	return a.afterResize
+}
+
+// SetFocus sets the focus on a new primitive. All key events will be redirected
+// to that primitive. Callers must ensure that the primitive will handle key
+// events.
 //
 // Blur() will be called on the previously focused primitive. Focus() will be
 // called on the new primitive.
